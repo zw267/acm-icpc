@@ -1,0 +1,114 @@
+                                            
+  //File Name: hdu2825.cpp
+  //Created Time: 2017年01月07日 星期六 19时00分25秒
+                                   
+#include <bits/stdc++.h>
+#define LL long long
+using namespace std;
+char str[20];
+int a[20];
+int num[1100];
+struct AC{
+	static const int MAXN = 200;
+	static const int SET = 26;
+	static const int P = 20090717;
+	int trie[MAXN][SET];
+	int fail[MAXN];
+	int tag[MAXN];
+	int tot;
+	int f[26][MAXN][1<<10];
+	void init(){
+		fill(trie[0],trie[0] + SET,-1);
+		memset(tag,0,sizeof(tag));
+		tot = 1;
+	}
+	void add(int m,const int *s,int val){
+		int p = 0;
+		for(int i=0;i<m;++i){
+			if(trie[p][*s] == -1){
+				fill(trie[tot],trie[tot] + SET,-1);
+				trie[p][*s] = tot++;
+			}
+			p = trie[p][*s];
+			++s;
+		}
+		tag[p] |= (1 << val);
+	}
+	void build(){
+		queue<int> bfs;
+		for(int i=0;i<SET;++i){
+			if(trie[0][i] != -1){
+				fail[trie[0][i]] = 0;
+				bfs.push(trie[0][i]);
+			}
+			else{
+				trie[0][i] = 0;
+			}
+		}
+		while(!bfs.empty()){
+			int p = bfs.front();
+			tag[p] |= tag[fail[p]];
+			bfs.pop();
+			for(int i=0;i<SET;++i){
+				if(trie[p][i] != -1){
+					fail[trie[p][i]] = trie[fail[p]][i];
+					bfs.push(trie[p][i]);
+				}
+				else{
+					trie[p][i] = trie[fail[p]][i];
+				}
+			}
+		}
+	}
+	int solve(int n,int m,int K){
+		int ma = 1 << m;
+		memset(f,0,sizeof(f));
+		f[0][0][0] = 1;
+		for(int i=0;i<n;++i){
+			for(int j=0;j<=tot;++j){
+				for(int k=0;k<ma;++k){
+					if(!f[i][j][k]) continue;
+					for(int ch=0;ch<SET;++ch){
+						(f[i+1][trie[j][ch]][k|tag[trie[j][ch]]] +=
+							f[i][j][k]) %= P;
+					}
+				}
+			}
+		}
+		LL res = 0;
+		for(int j=0;j<=tot;++j){
+			for(int k=0;k<ma;++k){
+				if(num[k] >= K)
+					(res += f[n][j][k]) %= P;
+			}
+		}
+		return (int)res;
+	}
+}ac;
+void init(){
+	for(int i=0;i<1024;++i){
+		num[i] = 0;
+		for(int j=0;j<10;++j){
+			if(i & (1 << j)) 
+				++num[i];
+		}
+	}
+}
+int main(){
+	init();
+	int n,m,k;
+	while(~scanf("%d %d %d",&n,&m,&k)){
+		if(!n && !m && !k) break;
+		ac.init();
+		for(int i=0;i<m;++i){
+			scanf("%s",str);
+			int l = strlen(str);
+			for(int j=0;j<l;++j)
+				a[j] = str[j] - 'a';
+			ac.add(l,a,i);
+		}
+		ac.build();
+		printf("%d\n",ac.solve(n,m,k));
+	}
+	return 0;
+}
