@@ -1,0 +1,128 @@
+                                            
+  //File Name: poj2778.cpp
+  //Created Time: 2017年01月09日 星期一 15时45分43秒
+                                   
+#include <bits/stdc++.h>
+#define LL long long
+using namespace std;
+const int MAXN = 100 + 5;
+const int P = 100000;
+int change(const char *s){
+	if(*s == 'A') return 0;
+	if(*s == 'C') return 1;
+	if(*s == 'T') return 2;
+	return 3;
+}
+struct AC{
+	int trie[MAXN][4];
+	int fail[MAXN];
+	int tag[MAXN];
+	int tot;
+	void init(){
+		fill(trie[0],trie[0] + 4,-1);
+		memset(tag,0,sizeof(tag));
+		tot = 1;
+	}
+	void add(const int m,const int *s){
+		int p = 0;
+		for(int i=0;i<m;++i){
+			if(trie[p][*s] == -1){
+				fill(trie[tot],trie[tot] + 4,-1);
+				trie[p][*s] = tot++;
+			}
+			p = trie[p][*s];
+			++s;
+		}
+		tag[p] = 1;
+	}
+	void build(){
+//		printf("tot = %d\n",tot);
+		queue<int> que;
+		for(int i=0;i<4;++i){
+			if(trie[0][i] != -1){
+				fail[trie[0][i]] = 0;
+					que.push(trie[0][i]);
+			}
+			else
+				trie[0][i] = 0;
+		}
+		while(!que.empty()){
+			int u = que.front();
+			que.pop();
+			tag[u] |= tag[fail[u]];
+			for(int i=0;i<4;++i){
+				if(trie[u][i] != -1){
+					fail[trie[u][i]] = trie[fail[u]][i];
+					que.push(trie[u][i]);
+				}
+				else
+					trie[u][i] = trie[fail[u]][i];
+			}
+		}
+	}
+}ac;
+struct matrix_t{
+	int x[MAXN][MAXN];
+	int n;
+	matrix_t(int _n = 0,int v = 0){
+		n = _n;
+		memset(x,0,sizeof(x));
+		for(int i=1;i<=n;++i) x[i][i] = v;
+	}
+	matrix_t operator*(const matrix_t &r){
+		matrix_t p(n,0);
+		for(int k=1;k<=n;++k){
+			for(int i=1;i<=n;++i){
+				if(x[i][k] == 0) continue;
+				for(int j=1;j<=n;++j){
+					p.x[i][j] += 1LL * x[i][k] * r.x[k][j] % P;
+					p.x[i][j] %= P;
+				}
+			}
+		}
+		return p;
+	}
+	matrix_t power(LL p){
+		matrix_t a = *this;
+		matrix_t r(n,1);
+		for(;p;p>>=1){
+			if(p & 1) r = r * a;
+			a = a * a;
+		}
+		return r;
+	}
+}mat;
+char str[10];
+int a[10];
+LL solve(LL len){
+	ac.build();
+	int n = ac.tot;
+	mat = matrix_t(n,0);
+	for(int i=0;i<n;++i){
+		for(int j=0;j<4;++j){
+			if(ac.tag[ac.trie[i][j]]) continue;
+			++mat.x[i+1][ac.trie[i][j]+1];
+		}
+	}
+	mat = mat.power(len);
+	LL res = 0;
+	for(int i=1;i<=n;++i)
+		res = (res + mat.x[1][i]) % P;
+	return res;
+}
+int main(){
+	int m;
+	LL n;
+	while(~scanf("%d %lld",&m,&n)){
+		ac.init();
+		for(int i=0;i<m;++i){
+			scanf("%s",str);
+			int l = strlen(str);
+			for(int j=0;j<l;++j)
+				a[j] = change(&str[j]);
+			ac.add(l,a);
+		}
+		printf("%d\n",solve(n));
+	}
+	return 0;
+}
