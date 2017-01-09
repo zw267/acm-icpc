@@ -1,0 +1,116 @@
+                                            
+  //File Name: hdu3247.cpp
+  //Created Time: 2017年01月09日 星期一 13时12分30秒
+                                   
+#include <bits/stdc++.h>
+#define LL long long
+using namespace std;
+const int MAXN = 60000;
+struct AC{
+	int trie[MAXN][2];
+	int fail[MAXN];
+	int tag[MAXN];
+	int forbit[MAXN];
+	bool vis[MAXN][1 << 10];
+	int tot;
+	struct Node{
+		int p,state,d;
+		Node(){}
+		Node(int _p,int _state,int _d){
+			p = _p,state = _state,d = _d;
+		}
+	};
+	void init(){
+		trie[0][0] = trie[0][1] = -1;
+		memset(tag,0,sizeof(tag));
+		memset(forbit,0,sizeof(forbit));
+		tot = 1;
+	}
+	void add(const int m,const int *s,const int val){
+		int p = 0;
+		for(int i=0;i<m;++i){
+			if(trie[p][*s] == -1){
+				trie[tot][0] = trie[tot][1] = -1;
+				trie[p][*s] = tot++;
+			}
+			p = trie[p][*s];
+			++s;
+		}
+		if(val == -1) forbit[p] = 1;
+		else tag[p] |= (1 << val);
+	}
+	void build(){
+		queue<int> bfs;
+		while(!bfs.empty()) bfs.pop();
+		for(int i=0;i<2;++i){
+			if(trie[0][i] != -1){
+				fail[trie[0][i]] = 0;
+				bfs.push(trie[0][i]);
+			}
+			else
+				trie[0][i] = 0;
+		}
+		while(!bfs.empty()){
+			int p = bfs.front();
+			bfs.pop();
+			tag[p] |= tag[fail[p]];
+			forbit[p] |= forbit[fail[p]];
+			for(int i=0;i<2;++i){
+				if(trie[p][i] != -1){
+					fail[trie[p][i]] = trie[fail[p]][i];
+					bfs.push(trie[p][i]);
+				}
+				else
+					trie[p][i] = trie[fail[p]][i];
+			}
+		}
+	}
+	int bfs(const int n){
+		int ma = (1 << n);
+		memset(vis,false,sizeof(vis));
+		queue<Node> que;
+		while(!que.empty()) que.pop();
+		que.push(Node(0,0,0));
+		vis[0][0] = true;
+		while(!que.empty()){
+			Node u = que.front();
+			que.pop();
+			if(u.state == ma - 1) return u.d;
+			for(int i=0;i<2;++i){
+				int p = trie[u.p][i];
+				if(forbit[p]) continue;
+				int state = u.state | tag[p];
+				if(vis[p][state]) continue;
+				vis[p][state] = true;
+				que.push(Node(p,state,u.d + 1));
+			}
+		}
+		return -1;
+	}
+}ac;
+char str[50000];
+int a[50000];
+int main(){
+	int n,m;
+	while(~scanf("%d %d",&n,&m)){
+		if(!n && !m) break;
+		ac.init();
+		for(int i=0;i<n;++i){
+			scanf("%s",str);
+			int l = strlen(str);
+			for(int j=0;j<l;++j)
+				a[j] = str[j] - '0';
+			ac.add(l,a,i);
+		}
+		for(int i=0;i<m;++i){
+			scanf("%s",str);
+			int l = strlen(str);
+			for(int j=0;j<l;++j)
+				a[j] = str[j] - '0';
+			ac.add(l,a,-1);
+		}
+		ac.build();
+		printf("%d\n",ac.bfs(n));
+	}
+	return 0;
+}
