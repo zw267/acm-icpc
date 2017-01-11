@@ -1,0 +1,132 @@
+                                            
+  //File Name: cf346B.cpp
+  //Created Time: 2017年01月11日 星期三 00时28分05秒
+                                   
+#include <bits/stdc++.h>
+#define LL long long 
+using namespace std;
+const int MAXN = 102;
+int s[MAXN],t[MAXN],tmp[MAXN],ans[MAXN];
+int sl,tl;
+char str[MAXN];
+struct AC{
+	int trie[MAXN][26];
+	int fail[MAXN];
+	int f[MAXN][MAXN][MAXN];
+	struct Node{
+		int i,j,k,val;
+		Node(){}
+		Node(int _i,int _j,int _k,int _val){
+			i = _i,j = _j,k = _k,val = _val;
+		};
+	}pre[MAXN][MAXN][MAXN];
+	int tot;
+	void init(){
+		fill(trie[0],trie[0] + 26,-1);
+		tot = 1;
+	}
+	void add(const int m,const int *s){
+		int p = 0;
+		for(int i=0;i<m;++i){
+			if(trie[p][*s] == -1){
+				fill(trie[tot],trie[tot] + 26,-1);
+				trie[p][*s] = tot++;
+			}
+			p = trie[p][*s];
+			++s;
+		}
+	}
+	void build(){
+		queue<int> que;
+		for(int i=0;i<26;++i){
+			if(trie[0][i] != -1){
+				fail[trie[0][i]] = 0;
+				que.push(trie[0][i]);
+			}
+			else
+				trie[0][i] = 0;
+		}
+		while(!que.empty()){
+			int p = que.front();
+			que.pop();
+			for(int i=0;i<26;++i){
+				if(trie[p][i] != -1){
+					fail[trie[p][i]] = trie[fail[p]][i];
+					que.push(trie[p][i]);
+				}
+				else
+					trie[p][i] = trie[fail[p]][i];
+			}
+		}
+//		printf("tot = %d\n",tot);
+	}
+	void update(int i,int j,int k,int val,int ii,int jj,int kk){
+		int u = 0;
+		if(val != -1) u = 1;
+		if(f[i][j][k] + u > f[ii][jj][kk]){
+			f[ii][jj][kk] = f[i][j][k] + u;
+			pre[ii][jj][kk] = Node(i,j,k,val);
+		}
+	}
+	int solve(){
+		memset(f,-1,sizeof(f));
+		f[0][0][0] = 0;
+		for(int i=0,to;i<=sl;++i){
+			for(int j=0;j<=tl;++j){
+				for(int k=0;k<tot - 1;++k){
+					if(f[i][j][k] == -1) continue;
+					if(i < sl && j < tl && s[i + 1] == t[j + 1]){
+						to = trie[k][s[i + 1]];
+						if(to < tot - 1)
+							update(i,j,k,s[i+1],i+1,j+1,to);
+					}
+					if(i < sl)
+						update(i,j,k,-1,i+1,j,k);
+					if(j < tl)
+						update(i,j,k,-1,i,j+1,k);
+				}
+			}
+		}
+		int k = 0;
+		for(int u=0;u<tot;++u){
+			if(f[sl][tl][u] > f[sl][tl][k])
+				k = u;
+		}
+//		printf("f = %d\n",f[sl][tl][k]);
+		if(f[sl][tl][k] == -1)
+		   	return 0;
+		int i = sl,j = tl,n = 0;
+		while(i > 0 && j > 0){
+			Node tmp = pre[i][j][k];
+			if(tmp.val != -1)
+				ans[n++] = tmp.val;
+			i = tmp.i,j = tmp.j,k = tmp.k;
+		}
+		return n;
+	}
+}ac;
+int main(){
+	ac.init();
+	scanf("%s",str + 1);
+	sl = strlen(str + 1);
+	for(int i=1;i<=sl;++i)
+		s[i] = str[i] - 'A';
+	scanf("%s",str + 1);
+	tl = strlen(str + 1);
+	for(int i=1;i<=tl;++i)
+		t[i] = str[i] - 'A';
+	scanf("%s",str);
+	int l = strlen(str);
+	for(int i=0;i<l;++i)
+		tmp[i] = str[i] - 'A';
+	ac.add(l,tmp);
+	ac.build();
+	int n = ac.solve();
+	if(n == 0) puts("0");
+	else{
+		for(int i=n-1;i>=0;--i)
+			printf("%c",ans[i] + 'A');
+		puts("");
+	}
+	return 0;
+}
