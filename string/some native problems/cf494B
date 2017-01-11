@@ -1,0 +1,99 @@
+                                            
+  //File Name: cf494B.cpp
+  //Created Time: 2017年01月10日 星期二 22时57分30秒
+                                   
+#include <bits/stdc++.h>
+#define LL long long
+using namespace std;
+const int MAXN = 100000 + 5;
+const int P = (int)1e9 + 7;
+int lef[MAXN];
+LL f[MAXN],g[MAXN];
+char s[MAXN],t[MAXN];
+int a[MAXN];
+struct AC{
+	int trie[MAXN][26];
+	int fail[MAXN];
+	int tot,len;
+	void init(){
+		fill(trie[0],trie[0] + 26,-1);
+		tot = 1;
+	}
+	void add(const int m,const int *s){
+		int p = 0;
+		len = m;
+		for(int i=0;i<m;++i){
+			if(trie[p][*s] == -1){
+				fill(trie[tot],trie[tot] + 26,-1);
+				trie[p][*s] = tot++;			
+			}
+			p = trie[p][*s];
+			++s;
+		}
+	}
+	void build(){
+		queue<int> que;
+		for(int i=0;i<26;++i){
+			if(trie[0][i] != -1){
+				fail[trie[0][i]] = 0;
+				que.push(trie[0][i]);
+			}
+			else
+				trie[0][i] = 0;
+		}
+		while(!que.empty()){
+			int p = que.front();
+			que.pop();
+			for(int i=0;i<26;++i){
+				if(trie[p][i] != -1){
+					fail[trie[p][i]] = trie[fail[p]][i];
+					que.push(trie[p][i]);
+				}
+				else
+					trie[p][i] = trie[fail[p]][i];
+			}
+		}
+//		printf("tot = %d\n",tot);
+	}
+	void cal(const int m,const int *s){
+		memset(lef,-1,sizeof(lef));
+		int p = 0;
+		for(int i=0;i<m;++i){
+			p = trie[p][*s];
+			if(p == tot - 1){
+				lef[i + 1] = i - len + 1 + 1;
+				p = fail[p];
+			}
+			++s;
+		}
+	}
+}ac;
+LL solve(){
+	int n = strlen(s);
+	for(int i=0;i<n;++i)
+		a[i] = s[i] - 'a';
+	ac.build();
+	ac.cal(n,a);
+	f[0] = g[0] = 1;
+	int l = -1;
+	for(int i=1;i<=n;++i){
+		if(lef[i] != -1)
+			l = max(lef[i],l);
+		if(l == -1)
+			f[i] = f[i -1];
+		else
+			f[i] = (f[i - 1] + g[l - 1]) % P;
+		g[i] = (g[i - 1] + f[i]) % P;
+	}
+	return (f[n] - 1 + P) % P;
+}
+int main(){
+	ac.init();
+	scanf("%s %s",s,t);
+	int l = strlen(t);
+	for(int i=0;i<l;++i)
+		a[i] = t[i] - 'a';
+	ac.add(l,a);
+	printf("%lld\n",solve());
+	return 0;
+}
