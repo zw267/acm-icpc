@@ -1,0 +1,127 @@
+                                            
+  //File Name: hdu4511.cpp
+  //Created Time: 2017年01月10日 星期二 12时25分04秒
+                                   
+#include <bits/stdc++.h>
+#define LL long long
+#define pdd pair<double,double>
+#define x first
+#define y second
+using namespace std;
+const int MAXN = 51;
+const double INF = 1e20;
+double dis[MAXN][MAXN];
+pdd point[MAXN];
+int a[MAXN];
+struct AC{
+	int n,tot;
+	int trie[505][51];
+	int fail[505];
+	int tag[505];
+	double f[51][505];
+	void init(int _n = 0){
+		n = _n;
+		fill(trie[0],trie[0] + n,-1);
+		memset(tag,0,sizeof(tag));
+		tot = 1;
+	}
+	void add(const int m,const int *s){
+		int p = 0;
+		for(int i=0;i<m;++i){
+			if(trie[p][*s] == -1){
+				fill(trie[tot],trie[tot] + n ,-1);
+				trie[p][*s] = tot++;
+			}
+			p = trie[p][*s];
+			++s;
+		}
+		tag[p] = 1;
+	}
+	void build(){
+		queue<int> que;
+		fail[0] = 0;
+		while(!que.empty()) que.pop();
+		for(int i=0;i<n;++i){
+			if(trie[0][i] != -1){
+				fail[trie[0][i]] = 0;
+				que.push(trie[0][i]);
+			}
+			else
+				trie[0][i] = 0;
+		}
+		while(!que.empty()){
+			int p = que.front();
+			que.pop();
+			tag[p] |= tag[fail[p]];
+			for(int i=0;i<n;++i){
+				if(trie[p][i] != -1){
+					fail[trie[p][i]] = trie[fail[p]][i];
+					que.push(trie[p][i]);
+				}
+				else
+					trie[p][i] = trie[fail[p]][i];
+			}
+		}
+//		printf("tot = %d\n",tot);
+	}
+	double dp(){
+		for(int i=0;i<n;++i)
+			for(int j=0;j<tot;++j)
+				f[i][j] = INF;
+		int start = trie[0][0];
+		if(tag[start]) return INF;
+		f[0][start] = 0;
+		for(int i=0;i<n-1;++i){
+			for(int j=0;j<tot;++j){
+				if(f[i][j] == INF || tag[j]) continue;
+//				printf("i = %d j = %d f=  %.2f\n",i,j,f[i][j]);
+				for(int k=i+1;k<n;++k){
+					int u = trie[j][k];
+					if(tag[u]) continue;
+					f[k][u] = min(f[k][u],f[i][j] + dis[i][k]);
+//					printf("k = %d u = %d f = %.2f\n",k,u,f[k][u]);
+				}
+			}
+		}
+		double res = INF;
+		for(int i=0;i<tot;++i)
+			res = min(res,f[n - 1][i]);
+		return res;
+	}
+}ac;
+void solve(int n){
+	for(int i=0;i<n;++i){
+		for(int j=i;j<n;++j){
+			double tmp = (point[i].x - point[j].x) * (point[i].x - point[j].x)
+				+ (point[i].y - point[j].y) * (point[i].y - point[j].y);
+			dis[j][i] = INF;
+			dis[i][j] = sqrt(tmp);
+		}
+	}
+	ac.build();
+	double ans = ac.dp();
+	if(ans == INF) puts("Can not be reached!");
+	else printf("%.2f\n",ans);
+}
+int main(){
+	int n,m;
+	while(~scanf("%d %d",&n,&m)){
+		if(!n && !m) break;
+		for(int i=0;i<n;++i){
+			double x,y;
+			scanf("%lf %lf",&x,&y);
+			point[i] = pdd(x,y);
+		}
+		ac.init(n);
+		for(int i=1,l;i<=m;++i){
+			scanf("%d",&l);
+			for(int j=0;j<l;++j){
+				scanf("%d",a + j);
+				--a[j];
+			}
+			ac.add(l,a);
+		}
+		solve(n);
+	}
+	return 0;
+}
