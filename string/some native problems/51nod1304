@@ -1,0 +1,43 @@
+                                            
+  //File Name: nod1304.cpp
+  //Created Time: 2017年01月11日 星期三 18时01分28秒
+                                   
+#include <bits/stdc++.h>
+#define LL long long
+using namespace std;
+const int MAXN = 1000000 + 3;
+char str[MAXN];
+int nex[MAXN];
+LL ext_kmp(const char *x,int *nex){
+	int m = strlen(x);
+	nex[0] = m;
+	LL res = m;
+	int j = 0;
+	while(j + 1 < m && x[j] == x[j + 1])
+		++j;
+	nex[1] = j;
+	res += j;
+	int k = 1;
+	for(int i=2;i<m;++i){
+		int p = nex[k] + k - 1;
+		int l = nex[i - k];
+		if(i + l < p + 1){
+			nex[i] = l;
+			res += l;
+		}
+		else{
+			j = max(0,p - i + 1);
+			while(j + i < m && x[i + j] == x[j])
+				++j;
+			nex[i] = j;
+			res += j;
+			k = i;
+		}
+	}
+	return res;
+}
+int main(){
+	scanf("%s",str);
+	printf("%lld\n",ext_kmp(str,nex));
+	return 0;
+}
